@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#08111f" />
+    <title>KSP Intelligence Copilot</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark"><span></span><i></i></div>
+          <div><strong>KSP</strong><small>INTELLIGENCE COPILOT</small></div>
+        </div>
+        <div class="environment"><span class="pulse"></span>SECURE SANDBOX <em>DEMO DATA</em></div>
+        <nav>
+          <button class="nav-item active" data-view="overview"><span class="nav-icon">⌘</span>Command centre</button>
+          <button class="nav-item" data-view="cases"><span class="nav-icon">▣</span>Case intelligence</button>
+          <button class="nav-item" data-view="graph"><span class="nav-icon">◎</span>Entity graph</button>
+          <button class="nav-item" data-view="map"><span class="nav-icon">⌖</span>Crime geography</button>
+          <button class="nav-item" data-view="analytics"><span class="nav-icon">◔</span>Analytics</button>
+        </nav>
+        <div class="sidebar-bottom">
+          <div class="shift-card"><span class="avatar">AR</span><div><b>Arjun Rao</b><small>Inspector · Cyber & Crime</small></div><span class="more">•••</span></div>
+          <p>All activity is logged and attributable.</p>
+        </div>
+      </aside>
+
+      <main>
+        <header class="topbar">
+          <div class="crumb"><span id="page-label">COMMAND CENTRE</span><b> / </b><span>LIVE INTELLIGENCE</span></div>
+          <div class="top-actions"><button class="icon-button" aria-label="Notifications">⌁<i></i></button><button class="date-button">26 JUL 2026 <span>⌄</span></button></div>
+        </header>
+
+        <section class="view active" id="overview">
+          <div class="hero-copy">
+            <div class="eyebrow"><span class="orb"></span> INVESTIGATION ASSISTANT · READY</div>
+            <h1>Good evening, Inspector.</h1>
+            <p>Ask a question across FIRs, case files, evidence, and linked entities.</p>
+          </div>
+
+          <div class="query-card">
+            <div class="query-top"><span><span class="spark">✦</span> Ask KSP Intelligence</span><button id="clear-chat">Clear session</button></div>
+            <div id="conversation" class="conversation">
+              <div class="message assistant-message">
+                <div class="ai-avatar">K</div>
+                <div class="message-content"><p>What would you like to investigate?</p><div class="suggestion-row"><button class="suggestion" data-query="Show burglary cases involving white Swift cars">White Swift burglary pattern</button><button class="suggestion" data-query="Show cyber fraud involving fake investment apps">Fake investment app fraud</button></div></div>
+              </div>
+            </div>
+            <form id="query-form" class="query-input"><button type="button" id="mic" aria-label="Voice query">◖</button><input id="query" autocomplete="off" placeholder="Ask about cases, people, evidence or patterns..." /><button class="send" aria-label="Run query">↑</button></form>
+            <div class="query-footer"><span>↯ Responses are evidence-grounded and access-controlled.</span><span><kbd>⌘</kbd> <kbd>↵</kbd> to send</span></div>
+          </div>
+
+          <section class="section-heading"><div><span>OPERATIONAL PICTURE</span><h2>At a glance</h2></div><button class="text-button" data-view="analytics">Open analytics →</button></section>
+          <div class="metrics">
+            <article class="metric-card"><div class="metric-icon violet">◌</div><div><span>Open investigations</span><strong>128</strong><small class="up">↑ 8.4% <em>vs. last week</em></small></div><div class="mini-bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></article>
+            <article class="metric-card"><div class="metric-icon orange">⌁</div><div><span>Priority alerts</span><strong>06</strong><small class="urgent">2 require action <em>today</em></small></div><div class="alert-lines"><i></i><i></i><i></i></div></article>
+            <article class="metric-card"><div class="metric-icon mint">◫</div><div><span>Cases resolved</span><strong>74%</strong><small class="up">↑ 3.1% <em>this quarter</em></small></div><div class="donut"><b>74</b></div></article>
+          </div>
+
+          <div class="lower-grid">
+            <section class="panel alerts-panel"><div class="panel-head"><div><span>ACTIVE SIGNALS</span><h2>Intelligence requiring review</h2></div><button class="icon-button plain">•••</button></div><div class="signal-list">
+              <button class="signal" data-query="Show burglary cases involving white Swift cars"><div class="signal-icon red">⌁</div><div><b>Vehicle-linked burglary cluster</b><p>4 new cross-case associations detected</p></div><span class="tag high">HIGH</span><time>12m</time></button>
+              <button class="signal" data-query="Show cyber fraud involving fake investment apps"><div class="signal-icon amber">◌</div><div><b>Fake investment app network</b><p>₹18.6L transfer pattern detected</p></div><span class="tag medium">MED</span><time>48m</time></button>
+              <button class="signal" data-query="Show missing person cases near Mangalore"><div class="signal-icon blue">⌖</div><div><b>Coastal missing-person update</b><p>New witness statement ingested</p></div><span class="tag review">REVIEW</span><time>2h</time></button>
+            </div></section>
+            <section class="panel activity-panel"><div class="panel-head"><div><span>CASE VELOCITY</span><h2>Registered this week</h2></div><div class="legend"><i></i> Cases</div></div><div class="chart-wrap"><svg viewBox="0 0 500 180" role="img" aria-label="Case velocity chart"><defs><linearGradient id="area" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#7469ee" stop-opacity=".35"/><stop offset="1" stop-color="#7469ee" stop-opacity="0"/></linearGradient></defs><path class="gridline" d="M15 22H485M15 68H485M15 114H485M15 160H485"/><path class="area" d="M18 136 C55 132,60 105,92 111 S137 135,164 99 S209 89,237 101 S286 72,309 80 S350 104,382 58 S433 50,482 26 L482 160 L18 160Z"/><path class="chart-line" d="M18 136 C55 132,60 105,92 111 S137 135,164 99 S209 89,237 101 S286 72,309 80 S350 104,382 58 S433 50,482 26"/><circle cx="382" cy="58" r="5"/><text x="14" y="178">MON</text><text x="93" y="178">TUE</text><text x="171" y="178">WED</text><text x="249" y="178">THU</text><text x="329" y="178">FRI</text><text x="407" y="178">SAT</text><text x="474" y="178">SUN</text></svg><div class="chart-tip"><b>24</b><span>Cases</span></div></div></section>
+          </div>
+        </section>
+
+        <section class="view" id="cases">
+          <div class="view-title"><div><div class="eyebrow"><span class="orb"></span> CASE INTELLIGENCE</div><h1>Evidence-led case search</h1><p>Review FIR records with explainable entity matches.</p></div><button class="outline-button" data-view="overview">Ask assistant ↗</button></div>
+          <div class="case-layout"><section class="panel case-table"><div class="panel-head"><h2>Recent linked cases</h2><span class="count">13 MATCHES</span></div><div id="case-list"></div></section><aside class="case-detail panel" id="case-detail"></aside></div>
+        </section>
+
+        <section class="view" id="graph">
+          <div class="view-title"><div><div class="eyebrow"><span class="orb"></span> KNOWLEDGE GRAPH</div><h1>Relationships, not just records.</h1><p>Trace associations from people to vehicles, devices, accounts, and cases.</p></div><button class="outline-button" id="focus-network">Focus active network</button></div>
+          <section class="panel graph-panel"><div class="graph-tools"><span class="graph-status"><i></i> 14 verified entities</span><div><button class="chip active">All</button><button class="chip">People</button><button class="chip">Assets</button><button class="chip">Evidence</button></div></div><div class="graph-canvas"><svg viewBox="0 0 980 470" aria-label="Entity relationship graph"><defs><filter id="glow"><feGaussianBlur stdDeviation="4" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><g class="graph-links"><path d="M211 230 C325 220 325 122 421 130"/><path d="M211 230 C310 220 335 310 425 320"/><path d="M485 155 C535 202 557 207 610 215"/><path d="M485 326 C530 280 555 260 610 243"/><path d="M670 230 C735 226 748 137 809 126"/><path d="M670 230 C741 238 752 329 812 333"/><path d="M456 158 L456 292"/></g><g class="edge-label"><text x="304" y="147">REGISTERED TO</text><text x="303" y="297">SEEN IN</text><text x="538" y="188">ASSOCIATED</text><text x="536" y="287">LINKED VIA</text><text x="727" y="157">MENTIONED IN</text><text x="722" y="315">EVIDENCE IN</text><text x="465" y="230">USED BY</text></g><g class="entity person"><circle cx="180" cy="230" r="39"/><text x="180" y="225">RAHUL</text><text x="180" y="241">SHAIKH</text></g><g class="entity vehicle active-node"><rect x="408" y="99" rx="13" width="96" height="58"/><text x="456" y="123">WHITE</text><text x="456" y="140">SWIFT</text></g><g class="entity phone"><rect x="410" y="291" rx="13" width="92" height="58"/><text x="456" y="315">+91 98••</text><text x="456" y="332">4418</text></g><g class="entity hub"><circle cx="640" cy="230" r="38" filter="url(#glow)"/><text x="640" y="225">FIR</text><text x="640" y="241">1023</text></g><g class="entity evidence"><rect x="780" y="97" rx="13" width="98" height="58"/><text x="829" y="122">CCTV-07</text><text x="829" y="140">0.89 MATCH</text></g><g class="entity case"><rect x="780" y="304" rx="13" width="98" height="58"/><text x="829" y="329">FIR-1921</text><text x="829" y="346">JAYANAGAR</text></g></svg><div class="graph-tooltip"><b>White Swift · KA-03-MR-4821</b><span>Vehicle · Verified in 3 FIRs</span></div></div><div class="graph-footer"><span>Node outline indicates evidence confidence</span><span><i class="key verified"></i> Verified <i class="key linked"></i> Inferred association</span></div></section>
+        </section>
+
+        <section class="view" id="map">
+          <div class="view-title"><div><div class="eyebrow"><span class="orb"></span> CRIME GEOGRAPHY</div><h1>See the pattern on the ground.</h1><p>Live generated FIR geography, filterable by crime type, district and status.</p></div><button class="outline-button">Role-filtered view</button></div><section class="panel map-panel"><div class="map-sidebar"><span>LIVE FIR GEOGRAPHY</span><h2 id="map-title">All Karnataka</h2><p id="map-summary">Loading registered incident locations...</p><div class="map-filters"><label>Crime type<select id="map-crime-type"><option value="">All crime types</option></select></label><label>District<select id="map-district"><option value="">All districts</option></select></label><label>Status<select id="map-status"><option value="">All statuses</option><option>Under Investigation</option><option>Charge Sheeted</option><option>Closed</option><option>Undetected</option><option>Pending Trial</option></select></label></div><hr/><b>Map safety note</b><p class="small">Each point is generated demo data. Operational maps must enforce role and jurisdiction filtering.</p><button class="primary-button" data-view="graph">Trace selected case graph →</button></div><div id="crime-map" class="map-art"><div class="map-loading">Loading geographic case records…</div></div></section>
+        </section>
+
+        <section class="view" id="analytics"><div class="view-title"><div><div class="eyebrow"><span class="orb"></span> ANALYTICS</div><h1>Crime intelligence, made legible.</h1><p>A controlled operational summary, not predictive policing.</p></div><button class="outline-button">Export briefing ↓</button></div><div class="analytics-grid"><section class="panel breakdown"><div class="panel-head"><div><span>CASE MIX</span><h2>By reported category</h2></div><span class="count">LAST 30 DAYS</span></div><div class="bar-row"><b>Cyber fraud</b><div><i style="width:83%"></i></div><span>42</span></div><div class="bar-row"><b>Property crime</b><div><i style="width:67%"></i></div><span>34</span></div><div class="bar-row"><b>Violent crime</b><div><i style="width:38%"></i></div><span>19</span></div><div class="bar-row"><b>Missing persons</b><div><i style="width:29%"></i></div><span>15</span></div></section><section class="panel principle"><span>GOVERNANCE BY DESIGN</span><h2>Confidence is not a verdict.</h2><p>The assistant distinguishes verified records from inferred links, exposes evidence, and logs every investigator action.</p><div><i>✓</i> Human review required for operational action</div><div><i>✓</i> Query, source and rationale audit trail</div></section></div></section>
+      </main>
+    </div>
+    <div id="toast" class="toast"></div>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="/app.js"></script>
+  </body>
+</html>

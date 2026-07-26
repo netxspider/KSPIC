@@ -1,0 +1,13 @@
+{
+  "name": "ksp-intelligence-copilot",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "generate:data": "python3 -m backend.generate_data --count 5000",
+    "dev": "python3 -m backend.app --port 8000",
+    "build": "node --check app.js && PYTHONPYCACHEPREFIX=/private/tmp/kspic-pyc python3 -m py_compile backend/*.py && npm --prefix frontend run build",
+    "preview": "python3 -m backend.app --port 8000",
+    "dev:backend": "python3 -m backend.app --port 8000",
+    "dev:frontend": "npm --prefix frontend run dev"
+  }
+}
