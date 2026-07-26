@@ -1,17 +1,18 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
 export default function CrimeMap({ cases, onCaseSelected }) {
   const container = useRef(null);
   const map = useRef(null);
   const markers = useRef(null);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     let active = true;
     async function draw() {
-      const L = (await import('leaflet')).default;
       if (!active || !container.current) return;
       if (!map.current) {
         map.current = L.map(container.current).setView([15.2, 75.9], 7);
@@ -34,9 +35,10 @@ export default function CrimeMap({ cases, onCaseSelected }) {
       if (bounds.length) map.current.fitBounds(bounds, { padding: [24, 24], maxZoom: 11 });
       map.current.invalidateSize();
     }
-    draw();
+    draw().catch(() => setError('The map could not load. Refresh the page and try again.'));
     return () => { active = false; };
   }, [cases, onCaseSelected]);
 
+  if (error) return <div className="map-loading">{error}</div>;
   return <div className="leaflet-canvas" ref={container} aria-label="Geocoded FIR map" />;
 }

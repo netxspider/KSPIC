@@ -1,11 +1,15 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import CrimeMap from './components/CrimeMap';
+import dynamic from 'next/dynamic';
 import EntityGraph from './components/EntityGraph';
 
 const suggestions = ['How many cases of bulgary in udupi', 'Show burglary cases involving white Swift cars in Bangalore', 'Show cyber fraud involving fake investment apps'];
 const stageOrder = ['Incident', 'Witness', 'Evidence', 'Arrest', 'Court Status'];
+const CrimeMap = dynamic(() => import('./components/CrimeMap'), {
+  ssr: false,
+  loading: () => <div className="map-loading">Loading Karnataka crime map…</div>,
+});
 const apiBase = (process.env.NEXT_PUBLIC_API_BASE_URL || '').replace(/\/$/, '');
 const api = async (path, options) => { const response = await fetch(`${apiBase}/api${path}`, options); if (!response.ok) throw new Error((await response.json().catch(() => ({}))).detail || `API error ${response.status}`); return response.json(); };
 
