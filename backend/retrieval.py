@@ -46,21 +46,34 @@ def normalize_query(query: str) -> str:
         q = re.sub(pattern, replacement, q)
     return re.sub(r"\s+", " ", q)
 
-def conversational_response(query: str) -> Optional[dict]:
-    """Keep greetings and help requests outside the investigative retrieval path."""
-    q = normalize_query(query).rstrip("!?.")
-    greetings = {"hi", "hello", "hey", "good morning", "good afternoon", "good evening", "namaste"}
-    if q in greetings:
-        return {
-            "answer": "Hello. I can search generated FIRs, calculate verified counts, compare districts, trace a case timeline, or show a suspect relationship graph. What would you like to investigate?",
-            "confidence": 0,
-            "confidence_label": "No database retrieval",
-            "reasoning": [{"label": "Greeting detected; no FIR or vector search was run", "status": "conversation guardrail", "weight": 0}],
-            "citations": [], "provider": "Conversation guardrail", "results": [], "total_matches": 0,
-            "query_plan": {"original_query": query, "normalized_query": q, "intent": "conversation", "filters": [], "sql_template": "No database query", "scope_warning": None},
-            "rag_context": [], "vector_search": {"enabled": False, "reason": "No record retrieval for conversational input"},
-        }
-    return None
+def needs_investigative_retrieval(query: str, plan: dict) -> bool:
+    """Route only explicit case-data requests to retrieval; never use vectors as a fallback chat engine."""
+    if plan["filters"]:
+        return True
+    q = plan["normalized_query"]
+    action = r"\b(show|find|search|list|retrieve|display|compare|trace|map|how many|number of|count|total|give)\b"
+    subject = r"\b(fir|firs|case|cases|crime|crimes|evidence|suspect|vehicle|district|districts|timeline|graph|incident|incidents)\b"
+    return bool(re.search(action, q) and re.search(subject, q))
+
+def conversational_response(query: str) -> dict:
+    """Use the configured model for chat, while making the no-retrieval boundary explicit."""
+    from backend import bedrock
+    q = normalize_query(query)
+    try:
+        answer = bedrock.conversation(query)
+        provider = "Amazon Bedrock conversational response"
+        status = "model conversation; no database query"
+    except Exception as exc:
+        answer = "Conversational mode is unavailable because the Bedrock model is not currently reachable. No crime-record search was performed."
+        provider = f"Conversation unavailable: {type(exc).__name__}"
+        status = "no database query"
+    return {
+        "answer": answer, "confidence": 0, "confidence_label": "Not database-derived",
+        "reasoning": [{"label": "Conversational request routed away from crime-record retrieval", "status": status, "weight": 0}],
+        "citations": [], "provider": provider, "results": [], "total_matches": 0,
+        "query_plan": {"original_query": query, "normalized_query": q, "intent": "conversation", "filters": [], "sql_template": "No database query", "scope_warning": None},
+        "rag_context": [], "vector_search": {"enabled": False, "reason": "No record retrieval for conversational input"}, "aggregation": None,
+    }
 
 def sql_plan(query: str) -> dict:
     """Create a bounded query plan. No generated SQL reaches this layer."""
@@ -279,10 +292,10 @@ def bedrock_narrative(query: str, response: dict) -> dict:
     return response
 
 def assistant(query: str):
-    conversational = conversational_response(query)
-    if conversational:
-        return conversational
-    plan=sql_plan(query); rows,total=run_plan(plan,100 if plan["intent"] == "search" else 0); rag_rows=rag_search(query) if plan["intent"] == "search" else []
+    plan = sql_plan(query)
+    if not needs_investigative_retrieval(query, plan):
+        return conversational_response(query)
+    rows,total=run_plan(plan,100 if plan["intent"] == "search" else 0); rag_rows=rag_search(query) if plan["intent"] == "search" else []
     vector = vector_search.status()
     # Open-ended questions may use vectors to locate candidate FIRs. Structured
     # SQL filters and all counts remain untouched by vector similarity.

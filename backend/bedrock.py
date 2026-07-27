@@ -34,6 +34,18 @@ def narrative(prompt: str) -> str:
     })
     return response["output"]["message"]["content"][0]["text"]
 
+def conversation(user_message: str) -> str:
+    """Answer non-investigative conversation without implying a database lookup."""
+    prompt = (
+        "You are KSP Intelligence Copilot, a professional conversational assistant for officers. "
+        "Reply concisely and naturally to this message. Do not claim to have searched FIRs, "
+        "evidence, police systems, or the internet unless the system supplied records. "
+        "For time-sensitive public facts such as current officeholders, news, laws, or live events, "
+        "say that a verified live source is required instead of guessing. Do not discuss culpability. "
+        f"Officer message: {user_message}"
+    )
+    return narrative(prompt)
+
 def embed(text: str) -> list[float]:
     response = _request(EMBEDDING_MODEL, "invoke", {
         "inputText": text,
