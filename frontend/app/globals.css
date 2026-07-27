@@ -3,3 +3,4 @@
 .vector-status{margin:8px 0;padding:7px 9px;border:1px solid #3c4d64;border-radius:5px;color:#9aa9bb;font-size:9px}.vector-status b{color:#b8c5d6;margin-right:5px}.vector-status.ready{border-color:#3a796f;color:#70d8bd}
 .map-loading{height:550px;display:grid;place-items:center;color:#9dacbf;font-size:12px}
 @media(max-width:1000px){.map-loading{height:430px}}
+.aggregation-table{margin:12px 0;border:1px solid #344b66;border-radius:7px;overflow:hidden;background:#101d30}.aggregation-table>div:first-child{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;color:#dce7f4;font-size:11px}.aggregation-table small{color:#8fa1b6;font:9px monospace}.aggregation-table .table-wrap{max-height:245px;border-top:1px solid #2b3f59}.aggregation-table table{font-size:10px}.aggregation-table td:last-child,.aggregation-table th:last-child{text-align:right;color:#67d8ba;font-weight:700}

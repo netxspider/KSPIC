@@ -46,6 +46,22 @@ def normalize_query(query: str) -> str:
         q = re.sub(pattern, replacement, q)
     return re.sub(r"\s+", " ", q)
 
+def conversational_response(query: str) -> Optional[dict]:
+    """Keep greetings and help requests outside the investigative retrieval path."""
+    q = normalize_query(query).rstrip("!?.")
+    greetings = {"hi", "hello", "hey", "good morning", "good afternoon", "good evening", "namaste"}
+    if q in greetings:
+        return {
+            "answer": "Hello. I can search generated FIRs, calculate verified counts, compare districts, trace a case timeline, or show a suspect relationship graph. What would you like to investigate?",
+            "confidence": 0,
+            "confidence_label": "No database retrieval",
+            "reasoning": [{"label": "Greeting detected; no FIR or vector search was run", "status": "conversation guardrail", "weight": 0}],
+            "citations": [], "provider": "Conversation guardrail", "results": [], "total_matches": 0,
+            "query_plan": {"original_query": query, "normalized_query": q, "intent": "conversation", "filters": [], "sql_template": "No database query", "scope_warning": None},
+            "rag_context": [], "vector_search": {"enabled": False, "reason": "No record retrieval for conversational input"},
+        }
+    return None
+
 def sql_plan(query: str) -> dict:
     """Create a bounded query plan. No generated SQL reaches this layer."""
     q = normalize_query(query)
@@ -79,11 +95,13 @@ def sql_plan(query: str) -> dict:
         filters.append("c.CrimeNo = ?"); params.append(crime_no.group(0))
         applied.append({"field": "CrimeNo", "operator": "=", "value": crime_no.group(0), "source": "case ID"})
     is_count = bool(re.search(r"\b(how many|number of|count|total)\b", q))
+    by_district = bool(re.search(r"\b(by|per|each) district\b|\bdistrict[- ]?wise\b", q))
+    intent = "group_count" if is_count and by_district else "count" if is_count else "search"
     where = " WHERE " + " AND ".join(filters) if filters else ""
     return {
-        "original_query": query, "normalized_query": q, "intent": "count" if is_count else "search",
+        "original_query": query, "normalized_query": q, "intent": intent,
         "filters": applied, "where": where, "params": params,
-        "sql_template": "SELECT COUNT(*) FROM CaseMaster + approved joins" if is_count else "SELECT CaseMaster records + approved joins",
+        "sql_template": "SELECT DistrictName, COUNT(*) FROM CaseMaster + approved joins GROUP BY DistrictName" if intent == "group_count" else "SELECT COUNT(*) FROM CaseMaster + approved joins" if intent == "count" else "SELECT CaseMaster records + approved joins",
         "scope_warning": None if applied else "No supported structured filter was detected; results cover the whole generated dataset.",
     }
 
@@ -93,6 +111,10 @@ def run_plan(plan: dict, limit: int = 25) -> tuple[list[dict], int]:
         total = con.execute(count_sql, plan["params"]).fetchone()[0]
         if plan["intent"] == "count":
             return [], total
+        if plan["intent"] == "group_count":
+            grouped_sql = "SELECT d.DistrictName, COUNT(*) AS FIRCount " + BASE_SELECT[BASE_SELECT.rindex("\nFROM CaseMaster"):] + plan["where"] + " GROUP BY d.DistrictName ORDER BY FIRCount DESC, d.DistrictName"
+            rows = [dict(row) for row in con.execute(grouped_sql, plan["params"])]
+            return rows, total
         sql = BASE_SELECT + plan["where"] + " ORDER BY c.CrimeRegisteredDate DESC LIMIT ?"
         rows = [dict(row) for row in con.execute(sql, [*plan["params"], min(limit, 500)])]
     return rows, total
@@ -218,12 +240,20 @@ def public_plan(plan: dict) -> dict:
 
 def deterministic_response(query: str, plan: dict, rows: list[dict], total: int, rag_rows: list[dict], vector: Optional[dict] = None) -> dict:
     scope = ", ".join(f"{x['field']} {x['operator']} {x['value']}" for x in plan["filters"]) or "no structured filter"
-    citations=[{"crime_no":row["CrimeNo"],"title":row.get("CrimeType","Case record"),"source":"CaseMaster + linked evidence"} for row in rows[:6]]
+    citations=[{"crime_no":row["CrimeNo"],"title":row.get("CrimeType","Case record"),"source":"CaseMaster + linked evidence"} for row in rows[:6] if row.get("CrimeNo")]
     reasoning=[{"label":f"SQL agent applied: {scope}","status":"parameterized query","weight":0},{"label":"FIR count and citations are database-derived","status":"not model-derived","weight":0}]
+    aggregation = None
     if plan["intent"] == "count":
         answer=f"The generated database contains {total:,} matching FIR record{'s' if total != 1 else ''}."
         label="Complete database count"
         confidence=100
+    elif plan["intent"] == "group_count":
+        crime_type = next((item["value"] for item in plan["filters"] if item["field"] == "CrimeType"), "FIR")
+        answer=f"The generated database contains {total:,} {crime_type} FIR records across {len(rows):,} districts. The district-wise totals are shown below."
+        label="Complete district aggregation"
+        confidence=100
+        aggregation = {"title": f"{crime_type} FIRs by district", "columns": ["District", "FIR count"], "rows": [{"District": row["DistrictName"], "FIR count": row["FIRCount"]} for row in rows], "source": "CaseMaster grouped by DistrictName"}
+        reasoning.insert(1, {"label": "District totals are grouped by DistrictName in the approved SQL query", "status": "database aggregation", "weight": 0})
     elif total == 0:
         answer="No FIR records match the approved filters in the generated database. No unrelated records were substituted."
         label="No matching records"
@@ -232,12 +262,12 @@ def deterministic_response(query: str, plan: dict, rows: list[dict], total: int,
         answer=f"I found {total:,} matching FIR records. Showing the first {len(rows):,} most recently registered records; choose Show all results to inspect linked tables."
         label="Retrieved record coverage"
         confidence=min(100, round(len(rows) / total * 100))
-    return {"answer":answer,"confidence":confidence,"confidence_label":label,"reasoning":reasoning,"citations":citations,"provider":"SQL agent + deterministic evidence engine","results":rows[:15],"total_matches":total,"query_plan":public_plan(plan),"rag_context":rag_rows[:5],"vector_search":vector or vector_search.status()}
+    return {"answer":answer,"confidence":confidence,"confidence_label":label,"reasoning":reasoning,"citations":citations,"provider":"SQL agent + deterministic evidence engine","results":rows[:15],"total_matches":total,"query_plan":public_plan(plan),"rag_context":rag_rows[:5],"vector_search":vector or vector_search.status(),"aggregation":aggregation}
 
 def bedrock_narrative(query: str, response: dict) -> dict:
     """Bedrock can add a non-factual narrative only; it cannot overwrite facts."""
     from backend import bedrock
-    if not bedrock.configured() or response["query_plan"]["intent"] == "count":
+    if not bedrock.configured() or response["query_plan"]["intent"] != "search":
         return response
     facts={"answer":response["answer"],"total_matches":response["total_matches"],"filters":response["query_plan"]["filters"],"citations":response["citations"]}
     prompt=("Write one neutral, non-factual investigation note of at most 45 words. Do not state any count, confidence, identity, guilt, or fact not in this immutable evidence bundle. Return plain text only. Bundle: "+json.dumps(facts))
@@ -249,7 +279,10 @@ def bedrock_narrative(query: str, response: dict) -> dict:
     return response
 
 def assistant(query: str):
-    plan=sql_plan(query); rows,total=run_plan(plan,100 if plan["intent"] == "search" else 0); rag_rows=rag_search(query)
+    conversational = conversational_response(query)
+    if conversational:
+        return conversational
+    plan=sql_plan(query); rows,total=run_plan(plan,100 if plan["intent"] == "search" else 0); rag_rows=rag_search(query) if plan["intent"] == "search" else []
     vector = vector_search.status()
     # Open-ended questions may use vectors to locate candidate FIRs. Structured
     # SQL filters and all counts remain untouched by vector similarity.
